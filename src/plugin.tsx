@@ -1,10 +1,14 @@
-// contents of plugin.jsx
 /** @jsx jsx */
 import { jsx } from '@emotion/core';
 import { Builder } from '@builder.io/react';
 import ReactQuill from 'react-quill';
 
-function MyCustomRichTextEditor(props) {
+interface EditorProps {
+  value: string;
+  onChange: (value: string) => void;
+}
+
+function MyCustomRichTextEditor(props: EditorProps) {
   return (
     <ReactQuill
       value={props.value}
@@ -15,5 +19,5 @@ function MyCustomRichTextEditor(props) {
 
 Builder.registerEditor({
   name: 'MyCustomRichTextEditor',
-  component: MyCustomRichTextEditor
+  component: MyCustomRichTextEditor,
 });

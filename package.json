@@ -9,18 +9,23 @@
     "dist"
   ],
   "scripts": {
-    "build": "webpack --mode production",
-    "start": "webpack-dev-server --mode development"
+    "build": "tsc --noEmit && webpack --mode production",
+    "start": "webpack-dev-server --mode development",
+    "typecheck": "tsc --noEmit"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@babel/preset-react": "^7.28.5",
+    "@babel/preset-typescript": "^7.28.5",
     "@builder.io/app-context": "^1.0.0",
     "@builder.io/react": "^9.1.2",
     "@emotion/core": "^11.0.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "babel-loader": "^10.1.1",
     "react-quill": "^2.0.0",
+    "typescript": "^5.9.3",
     "webpack": "^5.105.4",
     "webpack-cli": "^6.0.1",
     "webpack-dev-server": "^5.2.3"

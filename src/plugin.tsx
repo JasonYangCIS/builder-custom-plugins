@@ -1,5 +1,3 @@
-/** @jsx jsx */
-import { jsx } from '@emotion/core';
 import { Builder } from '@builder.io/react';
 import ReactQuill from 'react-quill';
 
@@ -18,6 +16,6 @@ function MyCustomRichTextEditor(props: EditorProps) {
 }
 
 Builder.registerEditor({
-  name: 'MyCustomRichTextEditor',
+  name: 'MyCustomRichTextEditorWithVite',
   component: MyCustomRichTextEditor,
 });

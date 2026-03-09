@@ -1,5 +1,5 @@
 {
-  "name": "rich-text-plugin",
+  "name": "builder-custom-plugins",
   "version": "1.0.0",
   "description": "",
   "entry": "plugin",

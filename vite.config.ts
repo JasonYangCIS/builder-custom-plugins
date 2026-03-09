@@ -7,7 +7,6 @@ export default defineConfig({
     lib: {
       entry: 'src/plugin.tsx',
       formats: ['system'],
-      fileName: () => 'plugin.system.js',
     },
     rollupOptions: {
       external: [
@@ -17,6 +16,9 @@ export default defineConfig({
         '@builder.io/app-context',
         '@emotion/core',
       ],
+      output: {
+        entryFileNames: 'plugin.system.[hash].js',
+      },
     },
   },
   server: {

@@ -1,0 +1,75 @@
+.container {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+
+  &.empty {
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.textarea {
+  flex: 1;
+  resize: none;
+  padding: 8px 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+  color: #333;
+  outline: none;
+  min-height: 120px;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.status {
+  font-size: 12px;
+  color: transparent;
+  transition: color 0.2s;
+
+  &.visible {
+    color: #2e7d32;
+  }
+}
+
+.button {
+  padding: 7px 16px;
+  background: #1565c0;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 1;
+  transition: opacity 0.15s;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+}
+
+.emptyMessage {
+  font-size: 13px;
+  color: #999;
+}

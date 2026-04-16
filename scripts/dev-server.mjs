@@ -1,42 +1,60 @@
-// Simple static file server for the built plugin bundle during development.
-// Serves the hashed dist/plugin.system.[hash].js at a stable URL:
-//   http://localhost:1268/plugin.system.js
-// The file is resolved on each request so hot rebuilds are picked up automatically.
+// Simple static file server for the built plugin bundles during development.
+// Serves each hashed dist/<name>.system.[hash].js at a stable URL:
+//   http://localhost:1268/<name>.system.js
+// Files are resolved on each request so hot rebuilds are picked up automatically.
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { DIST_DIR, listPlugins } from './plugins.mjs';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DIST_DIR = path.join(__dirname, '../dist');
 const PORT = 1268;
 
-function findPluginFile() {
+function findPluginFile(name) {
   try {
-    const file = fs.readdirSync(DIST_DIR).find(f => /^plugin\.system\.[a-f0-9]+\.js$/.test(f));
-    return file ? path.join(DIST_DIR, file) : null;
+    // Matches both `<name>.system.js` (dev) and `<name>.system.[hash].js` (prod).
+    const pattern = new RegExp(`^${name}\\.system(?:\\.[A-Za-z0-9_-]+)?\\.js$`);
+    const matches = fs
+      .readdirSync(DIST_DIR)
+      .filter((f) => pattern.test(f))
+      .map((f) => {
+        const full = path.join(DIST_DIR, f);
+        return { full, mtimeMs: fs.statSync(full).mtimeMs };
+      })
+      .sort((a, b) => b.mtimeMs - a.mtimeMs);
+    return matches[0]?.full ?? null;
   } catch {
     return null;
   }
 }
 
-http.createServer((req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Private-Network', 'true');
+http
+  .createServer((req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Private-Network', 'true');
+    // Dev URLs are stable, so prevent the browser / Builder.io loader
+    // from caching stale plugin bundles after a rebuild.
+    res.setHeader('Cache-Control', 'no-store, must-revalidate');
 
-  if (req.url === '/plugin.system.js') {
-    const pluginFile = findPluginFile();
-    if (pluginFile) {
-      res.writeHead(200, { 'Content-Type': 'application/javascript' });
-      fs.createReadStream(pluginFile).pipe(res);
+    const match = req.url && req.url.match(/^\/([A-Za-z0-9_-]+)\.system\.js$/);
+    // Re-read the plugin list on each request so newly added plugins appear
+    // without restarting the server.
+    if (match && listPlugins().includes(match[1])) {
+      const pluginFile = findPluginFile(match[1]);
+      if (pluginFile) {
+        res.writeHead(200, { 'Content-Type': 'application/javascript' });
+        fs.createReadStream(pluginFile).pipe(res);
+      } else {
+        res.writeHead(404);
+        res.end(`${match[1]} plugin not built yet — waiting for vite build...`);
+      }
     } else {
       res.writeHead(404);
-      res.end('Plugin not built yet — waiting for vite build...');
+      res.end();
     }
-  } else {
-    res.writeHead(404);
-    res.end();
-  }
-}).listen(PORT, () => {
-  console.log(`Plugin served at http://localhost:${PORT}/plugin.system.js`);
-});
+  })
+  .listen(PORT, () => {
+    console.log(`Plugin dev server listening on http://localhost:${PORT}`);
+    for (const name of listPlugins()) {
+      console.log(`  http://localhost:${PORT}/${name}.system.js`);
+    }
+  });

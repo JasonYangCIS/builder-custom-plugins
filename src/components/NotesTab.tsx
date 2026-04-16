@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import * as _appContext from '@builder.io/app-context';
 import type { ApplicationContext } from '@builder.io/app-context';
+import styles from './NotesTab.module.scss';
 
 // @builder.io/app-context is a stub at build time; Builder.io provides
 // the real implementation (with a .default property) at runtime.
@@ -8,59 +9,9 @@ const appState = (_appContext as unknown as { default: ApplicationContext }).def
 
 const NOTES_KEY = '_pluginNotes';
 
-const styles = {
-  container: {
-    padding: 16,
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: 10,
-    height: '100%',
-    boxSizing: 'border-box' as const,
-    fontFamily: 'inherit',
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: 600,
-    color: '#333',
-    margin: 0,
-  },
-  textarea: {
-    flex: 1,
-    resize: 'none' as const,
-    padding: '8px 10px',
-    fontSize: 13,
-    lineHeight: 1.5,
-    border: '1px solid #ddd',
-    borderRadius: 4,
-    fontFamily: 'inherit',
-    color: '#333',
-    outline: 'none',
-    minHeight: 120,
-  },
-  footer: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  status: (saved: boolean) => ({
-    fontSize: 12,
-    color: saved ? '#2e7d32' : 'transparent',
-    transition: 'color 0.2s',
-  }),
-  button: (saving: boolean) => ({
-    padding: '7px 16px',
-    background: '#1565c0',
-    color: '#fff',
-    border: 'none',
-    borderRadius: 4,
-    cursor: saving ? 'not-allowed' : 'pointer',
-    fontSize: 13,
-    fontWeight: 500,
-    opacity: saving ? 0.7 : 1,
-    transition: 'opacity 0.15s',
-  }),
-} as const;
+function cx(...classes: (string | false | undefined)[]) {
+  return classes.filter(Boolean).join(' ');
+}
 
 /**
  * Notes tab for the Builder.io content editor right panel.
@@ -101,17 +52,17 @@ export function NotesTab() {
 
   if (!content) {
     return (
-      <div style={{ ...styles.container, justifyContent: 'center', alignItems: 'center' }}>
-        <span style={{ fontSize: 13, color: '#999' }}>No content selected</span>
+      <div className={cx(styles.container, styles.empty)}>
+        <span className={styles.emptyMessage}>No content selected</span>
       </div>
     );
   }
 
   return (
-    <div style={styles.container}>
-      <p style={styles.label}>Notes</p>
+    <div className={styles.container}>
+      <p className={styles.label}>Notes</p>
       <textarea
-        style={styles.textarea}
+        className={styles.textarea}
         value={notes}
         onChange={(e) => {
           setNotes(e.target.value);
@@ -119,10 +70,10 @@ export function NotesTab() {
         }}
         placeholder="Add notes for this content entry..."
       />
-      <div style={styles.footer}>
-        <span style={styles.status(saved)}>Saved</span>
+      <div className={styles.footer}>
+        <span className={cx(styles.status, saved && styles.visible)}>Saved</span>
         <button
-          style={styles.button(saving)}
+          className={styles.button}
           onClick={handleSave}
           disabled={saving}
         >

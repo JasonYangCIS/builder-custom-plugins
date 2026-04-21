@@ -59,9 +59,17 @@ For `editor.mainTab` components, access the currently open content entry via `ap
 
 `editor.toolbarButton` components receive no props. To reach editor state, either use `@builder.io/app-context` (preferred, same pattern as mainTab) or `window.builder.selectedElements[0]` for the currently selected block.
 
+### Field editors: `value` / `onChange` contract
+
+Components registered via `Builder.registerEditor` receive `{ value, onChange }`. Builder holds the stored value and **echoes it back on every `onChange` call**, so a naive controlled editor that re-initializes from `value` on each render will re-seed on every keystroke and steal focus. Follow the **seed-once** pattern used by `LexicalRichTextEditor`: capture `value` in a ref on mount, feed it to the editor's own initial-state API, then treat the editor as the source of truth. Content switches (different entry/block) go through Builder's unmount/remount, which naturally triggers a fresh seed.
+
+For HTML-emitting field editors, **strip SCSS-module class names from the output before calling `onChange`**. Theme classes like `_ul_5e59f_156` only exist in *this* plugin's compiled CSS — if persisted, they become dead references on any site rendering the stored content. See `src/components/LexicalRichTextEditor/htmlSyncPlugin.tsx` (`cleanOutputHtml`) for the pattern (also strips Lexical's default `white-space: pre-wrap` and unwraps attribute-less `<span>`s).
+
+Two rich-text field editors coexist in the repo: `rich-text-editor.tsx` (legacy `react-quill` wrapper, registered as `MyCustomRichTextEditorWithVite`) and `lexical-rich-text-editor.tsx` (Lexical-based replacement, registered as `LexicalRichTextEditor`). Prefer Lexical for new work. Note that `$generateHtmlFromNodes` ↔ `$generateNodesFromDOM` is not a lossless round-trip — whitespace and nested inline formatting can shift, so content originally authored in Quill may visibly change on its first save through the Lexical editor.
+
 ## Component layout
 
-Each component lives in its own folder under `src/components/` with its TSX, its SCSS module, and an `index.ts` that re-exports the component. Helpers used by a single component (e.g. `appStateSnapshot.ts` for the inspector) live inside the same folder.
+Each component lives in its own folder under `src/components/` with its TSX, its SCSS module, and an `index.ts` that re-exports the component. Helpers used by a single component (e.g. `appStateSnapshot.ts` for the inspector, or the per-concern files inside `LexicalRichTextEditor/`) live inside the same folder — split by responsibility once a component grows beyond a single file.
 
 ```
 src/components/
@@ -73,6 +81,15 @@ src/components/
     AppStateInspector.tsx
     AppStateInspector.module.scss
     appStateSnapshot.ts
+    index.ts
+  LexicalRichTextEditor/
+    LexicalRichTextEditor.tsx   # composer + seed-once wiring
+    Toolbar.tsx                 # formatting controls
+    useToolbarState.ts          # selection-driven toolbar state
+    htmlSyncPlugin.tsx          # editor → onChange(html) with cleanup
+    nodes.ts                    # registered Lexical node classes
+    theme.ts                    # EditorThemeClasses → SCSS module classes
+    LexicalRichTextEditor.module.scss
     index.ts
 ```
 

@@ -31,6 +31,14 @@
     "vite-plugin-css-injected-by-js": "^4.0.1"
   },
   "dependencies": {
+    "@lexical/html": "^0.21.0",
+    "@lexical/link": "^0.21.0",
+    "@lexical/list": "^0.21.0",
+    "@lexical/react": "^0.21.0",
+    "@lexical/rich-text": "^0.21.0",
+    "@lexical/selection": "^0.21.0",
+    "@lexical/utils": "^0.21.0",
+    "lexical": "^0.21.0",
     "react-quill": "^2.0.0"
   }
 }

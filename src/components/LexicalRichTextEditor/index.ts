@@ -1,0 +1,1 @@
+export { LexicalRichTextEditor } from './LexicalRichTextEditor';

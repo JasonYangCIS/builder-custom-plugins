@@ -1,0 +1,211 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 13px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #ddd;
+  align-items: center;
+}
+
+.toolbarButton {
+  padding: 4px 8px;
+  background: transparent;
+  color: #333;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  min-width: 28px;
+  transition: background 0.1s, border-color 0.1s;
+
+  &:hover:not(:disabled) {
+    background: #fff;
+    border-color: #ddd;
+  }
+
+  &.active {
+    background: #e3f2fd;
+    border-color: #90caf9;
+    color: #1565c0;
+  }
+
+  &:disabled,
+  &.disabled {
+    cursor: not-allowed;
+    opacity: 0.35;
+  }
+}
+
+.colorWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 24px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  overflow: hidden;
+
+  &:hover {
+    background: #fff;
+    border-color: #ddd;
+  }
+}
+
+.colorSwatchLabel {
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1;
+  color: #333;
+  pointer-events: none;
+}
+
+.colorInput {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.blockSelect {
+  padding: 4px 6px;
+  font-size: 13px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.divider {
+  width: 1px;
+  height: 18px;
+  background: #ddd;
+  margin: 0 2px;
+}
+
+.editorShell {
+  position: relative;
+  min-height: 120px;
+}
+
+.contentEditable {
+  outline: none;
+  padding: 10px 12px;
+  min-height: 120px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #333;
+  caret-color: #1565c0;
+}
+
+.placeholder {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  color: #aaa;
+  pointer-events: none;
+  user-select: none;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.paragraph {
+  margin: 0 0 8px 0;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.h1 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  line-height: 1.2;
+}
+
+.h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  line-height: 1.25;
+}
+
+.h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  line-height: 1.3;
+}
+
+.ul {
+  padding-left: 20px;
+  margin: 0 0 8px 0;
+  list-style-type: disc;
+}
+
+.ol {
+  padding-left: 20px;
+  margin: 0 0 8px 0;
+  list-style-type: decimal;
+}
+
+.li {
+  margin: 2px 0;
+
+  // Lexical represents nested lists as an empty wrapper <li> whose only
+  // child is the nested <ul>/<ol>. Without this the browser renders a
+  // bullet for both the wrapper and the nested item (the "double bullet"
+  // issue). Hiding the bullet on wrapper li's matches how most RTEs render.
+  &:has(> ul),
+  &:has(> ol) {
+    list-style: none;
+  }
+}
+
+.link {
+  color: #1565c0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.bold {
+  font-weight: 700;
+}
+
+.italic {
+  font-style: italic;
+}
+
+.underline {
+  text-decoration: underline;
+}
+
+.quote {
+  border-left: 3px solid #ddd;
+  padding-left: 10px;
+  color: #666;
+  margin: 0 0 8px 0;
+  font-style: italic;
+}

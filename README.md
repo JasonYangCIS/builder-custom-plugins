@@ -1,8 +1,9 @@
 # Builder.io Custom Plugins
 
-A starter template for building custom editor plugins for [Builder.io](https://www.builder.io/). Includes three examples out of the box:
+A starter template for building custom editor plugins for [Builder.io](https://www.builder.io/). Includes four examples out of the box:
 
-- **`MyCustomRichTextEditorWithVite`** — a custom field editor using [React Quill](https://github.com/zenoamaro/react-quill)
+- **`LexicalRichTextEditor`** — a custom field editor built on [Lexical](https://lexical.dev/) (Meta's extensible editor framework). Preferred for new work.
+- **`MyCustomRichTextEditorWithVite`** — a legacy custom field editor using [React Quill](https://github.com/zenoamaro/react-quill). Kept for reference; prefer the Lexical editor above.
 - **Notes tab** — a right-panel tab in the content editor that lets users save freeform notes on any content entry
 - **App-state inspector** — a toolbar button that opens a modal showing a snapshot of Builder.io's runtime `appState`, with collapsible tree, copyable dot-paths, and automatic redaction of tokens, API keys, auth headers, and PII. Educational tool for plugin authors.
 
@@ -23,7 +24,8 @@ npm run dev
 - A static file server on port **1268** that serves each plugin at a stable URL
 - A live status table across all plugins (one row each, updating as builds progress)
 
-The three example plugins in this repo are served at:
+The four example plugins in this repo are served at:
+- `http://localhost:1268/lexical-rich-text-editor.system.js`
 - `http://localhost:1268/rich-text-editor.system.js`
 - `http://localhost:1268/notes.system.js`
 - `http://localhost:1268/app-state-inspector.system.js`
@@ -44,6 +46,16 @@ Each plugin is loaded independently — repeat these steps for every bundle you 
 > **Mixed-content note:** Builder.io's editor is served over `https://`, so browsers may block loading a plugin from `http://localhost`. Use the Builder.io desktop app, or launch Chrome with `--disable-web-security` for local dev only.
 
 ## Using the Included Plugins
+
+### Lexical rich-text editor
+Register a field of type **`LexicalRichTextEditor`** on any content model. The editor renders with a formatting toolbar (bold, italic, underline, headings, lists, links) and persists its output as HTML via Builder's `value` / `onChange` contract.
+
+Two things worth knowing if you hack on it:
+
+- **Seed-once input:** Builder echoes `value` back on every `onChange`. The component captures the initial `value` in a ref on mount and feeds it to Lexical's initial-state API, then treats the editor as the source of truth — a naive controlled setup would re-seed on every keystroke and steal focus. When Builder switches entries, its unmount/remount naturally triggers a fresh seed.
+- **Clean HTML on save:** before handing HTML back to Builder, the editor strips this plugin's SCSS-module class names (e.g. `_ul_5e59f_156`), Lexical's default `white-space: pre-wrap` inline style, and attribute-less `<span>` wrappers. Those class names only exist in this plugin's compiled CSS, so persisting them would leave dead references on any site rendering the stored content. See `src/components/LexicalRichTextEditor/htmlSyncPlugin.tsx` for the implementation.
+
+> **Migrating from the Quill editor:** `$generateHtmlFromNodes` ↔ `$generateNodesFromDOM` is not a lossless round-trip — whitespace and nested inline formatting can shift — so content originally authored in Quill may visibly change on its first save through the Lexical editor.
 
 ### Notes tab
 Open any content entry in the visual editor. A **Notes** tab appears in the right panel. Type a note and click **Save** — it's stored in the content entry's data (under the `_pluginNotes` key) and persists across sessions.
@@ -73,6 +85,8 @@ Builder.registerEditor({ name: 'MyEditor', component: MyEditor });
 ```
 
 The registered `name` becomes the field type identifier in Builder.io content models. Served at `http://localhost:1268/my-editor.system.js`.
+
+Note on the `value` / `onChange` contract: Builder holds the stored value and echoes it back on every `onChange` call. A naive controlled editor that re-initializes from `value` on each render will re-seed on every keystroke and steal focus. For anything stateful — rich text, code editors, anything with its own cursor — use a **seed-once** pattern: capture `value` in a ref on mount, feed it to the inner editor's initial-state API, then treat the editor as the source of truth. See `src/components/LexicalRichTextEditor/LexicalRichTextEditor.tsx` for an example. If your editor emits HTML with component-scoped class names (SCSS modules, emotion, etc.), strip them before calling `onChange` so the saved markup doesn't depend on CSS that only exists inside your plugin bundle.
 
 ### Editor main tab
 
@@ -136,6 +150,7 @@ Each bundle is built in its own Vite invocation so that nothing is shared betwee
 ```
 src/
   plugins/                        # One .tsx file per plugin → one bundle per file
+    lexical-rich-text-editor.tsx
     rich-text-editor.tsx
     notes.tsx
     app-state-inspector.tsx
@@ -148,6 +163,15 @@ src/
       AppStateInspector.tsx
       AppStateInspector.module.scss
       appStateSnapshot.ts         # Component-local helper
+      index.ts
+    LexicalRichTextEditor/
+      LexicalRichTextEditor.tsx   # Composer + seed-once wiring
+      Toolbar.tsx                 # Formatting controls
+      useToolbarState.ts          # Selection-driven toolbar state
+      htmlSyncPlugin.tsx          # Editor → onChange(html) with cleanup
+      nodes.ts                    # Registered Lexical node classes
+      theme.ts                    # EditorThemeClasses → SCSS module classes
+      LexicalRichTextEditor.module.scss
       index.ts
   declarations.d.ts               # Ambient types (untyped externals + *.module.scss)
 scripts/

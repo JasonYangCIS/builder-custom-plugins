@@ -1,11 +1,12 @@
 # Builder.io Custom Plugins
 
-A starter template for building custom editor plugins for [Builder.io](https://www.builder.io/). Includes four examples out of the box:
+A starter template for building custom editor plugins for [Builder.io](https://www.builder.io/). Includes five examples out of the box:
 
 - **`LexicalRichTextEditor`** — a custom field editor built on [Lexical](https://lexical.dev/) (Meta's extensible editor framework). Preferred for new work.
 - **`MyCustomRichTextEditorWithVite`** — a legacy custom field editor using [React Quill](https://github.com/zenoamaro/react-quill). Kept for reference; prefer the Lexical editor above.
 - **Notes tab** — a right-panel tab in the content editor that lets users save freeform notes on any content entry
 - **App-state inspector** — a toolbar button that opens a modal showing a snapshot of Builder.io's runtime `appState`, with collapsible tree, copyable dot-paths, and automatic redaction of tokens, API keys, auth headers, and PII. Educational tool for plugin authors.
+- **Plugin setting alert** — a left admin-sidebar tab that alerts the value saved in the plugin's own settings form. Minimal example of `Builder.register('plugin', ...)` (settings UI) plus `Builder.register('appTab', ...)` (sidebar icon + page).
 
 ## Prerequisites
 
@@ -24,11 +25,12 @@ npm run dev
 - A static file server on port **1268** that serves each plugin at a stable URL
 - A live status table across all plugins (one row each, updating as builds progress)
 
-The four example plugins in this repo are served at:
+The example plugins in this repo are served at:
 - `http://localhost:1268/lexical-rich-text-editor.system.js`
 - `http://localhost:1268/rich-text-editor.system.js`
 - `http://localhost:1268/notes.system.js`
 - `http://localhost:1268/app-state-inspector.system.js`
+- `http://localhost:1268/plugin-setting-alert.system.js`
 
 The dev server sends `Cache-Control: no-store` so Builder.io's loader picks up rebuilds without a hard-reload.
 
@@ -64,6 +66,18 @@ Open any content entry in the visual editor. A **Notes** tab appears in the righ
 Click the **Inspect state** button in the editor's top toolbar. A modal opens showing a snapshot of `appState` as a collapsible tree. Hover any row to reveal a **⧉ path** button that copies the dot-path (e.g. `appState.designerState.editingContentModel.data`) to your clipboard. Use **Expand all** / **Collapse all** in the toolbar to toggle the whole tree.
 
 Sensitive fields (`apiKey`, `authHeaders`, `authorization`, `*Token*`, `*Secret*`, `password`, `email`, `phone`, etc.) are shown as `<redacted>`. String values that look like JWTs, opaque tokens (40+ base64url chars), or HTTP auth-scheme values (`Bearer …`, `Basic …`, `Digest …`) are also masked wherever they appear.
+
+### Plugin setting alert
+
+This plugin has its own settings form (via `Builder.register('plugin', ...)`) *and* a left-sidebar tab (via `Builder.register('appTab', ...)`), so it needs one extra step beyond the generic "Loading Plugins" instructions above:
+
+1. Go to your Builder.io space settings → **Plugins** → **Edit** → **Add Plugin**.
+2. Enter the plugin URL **with a `pluginId` query param appended** — this is required for the settings button to show up:
+   - **Development:** `http://localhost:1268/plugin-setting-alert.system.js?pluginId=plugin-setting-alert`
+   - **Production:** `https://your-cdn.com/plugin-setting-alert.system.[hash].js?pluginId=plugin-setting-alert`
+3. Click **Save**, then reload the Builder.io app.
+4. Back in **Space Settings → Plugins**, an **Edit Plugin Settings** button now appears next to this plugin's entry. Click it, enter any text in **Saved Value**, and click **Save Changes**.
+5. Look for a new icon in Builder's left admin sidebar (a circled dot, alongside Content/Data/Account). Click it — it opens the plugin's tab and immediately alerts the value you saved. If you haven't saved a value yet, it alerts a reminder to do so.
 
 ## Adding a New Plugin
 
@@ -123,6 +137,36 @@ Builder.register('editor.toolbarButton', { component: MyToolbarButton });
 
 Toolbar button components receive no props. Use `@builder.io/app-context` or `window.builder.selectedElements[0]` to reach editor state.
 
+### Plugin settings + left sidebar tab
+
+```tsx
+// src/plugins/my-app-tab.tsx
+import { Builder } from '@builder.io/react';
+import { MyAppTab } from '../components/MyAppTab';
+
+const PLUGIN_ID = 'my-app-tab';
+
+// Adds a settings form under Space Settings → Plugins → Edit Plugin Settings
+Builder.register('plugin', {
+  id: PLUGIN_ID,
+  name: 'My App Tab',
+  settings: [{ name: 'someValue', type: 'string' }],
+  ctaText: 'Save Changes',
+});
+
+// Adds an icon + page to Builder's left admin sidebar
+Builder.register('appTab', {
+  name: 'My App Tab',
+  path: 'my-app-tab',
+  icon: 'https://cdn.example.com/icon.svg', // or a data: URI
+  component: MyAppTab,
+});
+```
+
+Read a saved setting back via `appState.user.organization.value.settings.plugins.get(PLUGIN_ID).get('someValue')` (that `organization` property isn't in the shipped `ApplicationContext` stub type — see the `appState` note above — so cast through `any`).
+
+For the settings button to appear in Builder.io's UI, the plugin URL registered in Space Settings → Plugins must include a `?pluginId=<id>` query param matching the `id` above (e.g. `http://localhost:1268/my-app-tab.system.js?pluginId=my-app-tab`) — otherwise Builder never associates the URL with the registered settings schema.
+
 ## Styling with SCSS modules
 
 Styles live in `*.module.scss` files next to their component. Import as:
@@ -154,6 +198,7 @@ src/
     rich-text-editor.tsx
     notes.tsx
     app-state-inspector.tsx
+    plugin-setting-alert.tsx
   components/                     # One folder per component
     NotesTab/
       NotesTab.tsx
@@ -163,6 +208,10 @@ src/
       AppStateInspector.tsx
       AppStateInspector.module.scss
       appStateSnapshot.ts         # Component-local helper
+      index.ts
+    PluginSettingAlert/
+      PluginSettingAlert.tsx
+      PluginSettingAlert.module.scss
       index.ts
     LexicalRichTextEditor/
       LexicalRichTextEditor.tsx   # Composer + seed-once wiring

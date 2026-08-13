@@ -167,6 +167,8 @@ Read a saved setting back via `appState.user.organization.value.settings.plugins
 
 For the settings button to appear in Builder.io's UI, the plugin URL registered in Space Settings → Plugins must include a `?pluginId=<id>` query param matching the `id` above (e.g. `http://localhost:1268/my-app-tab.system.js?pluginId=my-app-tab`) — otherwise Builder never associates the URL with the registered settings schema.
 
+**If a plugin needs to call a privileged/third-party API with a real secret, don't put that secret in browser-side plugin code at all** (a plugin `settings` field, even `type: 'password'`, is just client-visible org data — no encryption, no isolation between plugins in the browser). Route the call through a backend you control instead, and authenticate the plugin → backend leg with a token your backend can independently verify against the org's existing SSO identity provider — the exact mechanics depend on their IdP/protocol, and are worth working out with whoever owns that integration. See [`src/components/PluginSettingAlert/README.md`](src/components/PluginSettingAlert/README.md#security-notes) for the full writeup, including the weaker fallback (forwarding Builder's own session credentials) and PII-handling notes.
+
 ## Styling with SCSS modules
 
 Styles live in `*.module.scss` files next to their component. Import as:
